@@ -43,7 +43,6 @@
       <button id="btn-clock" class="hbtn clock-btn">▶ Iniciar</button>
       <button id="btn-half"  class="hbtn">⏭ Sig. Tiempo</button>
       <div class="spacer"></div>
-      <span class="header-hint" id="header-hint"></span>
     </div>
   </header>
 
@@ -62,10 +61,18 @@
         </div>
       </div>
 
-      <!-- Player list -->
-      <div id="player-list">
-        <!-- rendered by JS -->
+      <!-- Position selector (visible when player selected) -->
+      <div id="position-selector" class="hidden">
+        <span class="pos-label">Posición:</span>
+        <button class="pos-btn" data-pos="">—</button>
+        <button class="pos-btn" data-pos="GK">GK</button>
+        <button class="pos-btn" data-pos="DEF">DEF</button>
+        <button class="pos-btn" data-pos="MED">MED</button>
+        <button class="pos-btn" data-pos="DEL">DEL</button>
       </div>
+
+      <!-- Player list -->
+      <div id="player-list"></div>
 
       <!-- Log (landscape only) -->
       <div id="action-log">
@@ -75,15 +82,17 @@
 
       <!-- Control buttons -->
       <div id="ctrl-btns">
-        <button id="btn-undo"   class="cb">↩ Deshacer</button>
-        <button id="btn-save"   class="cb">💾 Guardar</button>
-        <button id="btn-load"   class="cb">📂 Cargar</button>
-        <button id="btn-report" class="cb">📋 Reporte</button>
-        <button id="btn-new"    class="cb danger">🔄 Nuevo</button>
-        <button id="btn-add"    class="cb">＋ Jugador</button>
-        <button id="btn-remove" class="cb">－ Jugador</button>
-        <button id="btn-table"  class="cb">📊 Tabla</button>
-        <button id="btn-excel"  class="cb">📥 Excel</button>
+        <button id="btn-undo"    class="cb">↩ Deshacer</button>
+        <button id="btn-save"    class="cb">💾 Guardar</button>
+        <button id="btn-load"    class="cb">📂 Cargar</button>
+        <button id="btn-report"  class="cb">📋 Reporte</button>
+        <button id="btn-new"     class="cb danger">🔄 Nuevo</button>
+        <button id="btn-add"     class="cb">＋ Jugador</button>
+        <button id="btn-remove"  class="cb">－ Jugador</button>
+        <button id="btn-sub"     class="cb">↕ Sust.</button>
+        <button id="btn-penalty" class="cb">⚽ Penales</button>
+        <button id="btn-season"  class="cb">📅 Temporada</button>
+        <button id="btn-table"   class="cb">📊 Tabla</button>
       </div>
     </div>
 
@@ -136,10 +145,10 @@
         </div>
       </div>
 
-    </div><!-- /right-panel -->
-  </div><!-- /main -->
+    </div>
+  </div>
 
-  <!-- Stats table (toggled) -->
+  <!-- Stats table -->
   <div id="stats-panel" class="hidden">
     <div class="table-header">
       <span>Tabla de Estadísticas</span>
@@ -150,7 +159,7 @@
         <thead>
           <tr>
             <th class="scol">Jugador</th>
-            <th>MIN</th><th>GOL</th>
+            <th>POS</th><th>MIN</th><th>GOL</th>
             <th>T M/A</th><th>TL M/A</th><th>P M/A</th>
             <th>%T</th><th>%TL</th><th>%P</th>
             <th>AST</th><th>FC</th><th>FR</th>
@@ -164,9 +173,78 @@
 
 </div><!-- /app -->
 
-<div id="toast"></div>
+<!-- ── Substitution Modal ── -->
+<div id="sub-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-title">↕ Sustitución</div>
+    <div class="modal-field">
+      <label>Sale del campo:</label>
+      <select id="sub-out-select"></select>
+    </div>
+    <div class="modal-field">
+      <label>Entra al campo:</label>
+      <select id="sub-in-select"></select>
+    </div>
+    <div class="modal-btns">
+      <button id="sub-confirm" class="modal-confirm">✓ Confirmar</button>
+      <button id="sub-cancel"  class="cb">Cancelar</button>
+    </div>
+  </div>
+</div>
 
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<!-- ── Penalty Shootout Modal ── -->
+<div id="penalty-modal" class="modal-overlay hidden">
+  <div class="modal-box penalty-box">
+    <div class="modal-title">⚽ Tanda de Penales</div>
+    <div id="pen-score-display" class="pen-score">Titans 0 — 0 Rival</div>
+    <div id="pen-winner" class="pen-winner hidden"></div>
+    <div class="table-scroll pen-table-wrap">
+      <table id="penalty-table">
+        <thead>
+          <tr><th>#</th><th>TITANS</th><th></th><th>RIVAL</th></tr>
+        </thead>
+        <tbody id="penalty-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pen-controls">
+      <div class="pen-side">
+        <div class="pen-side-label">TITANS</div>
+        <select id="pen-player-select"></select>
+        <div class="pen-side-btns">
+          <button id="pen-titans-made"  class="pen-btn made">✓ GOL</button>
+          <button id="pen-titans-miss"  class="pen-btn missed">✗ Fallo</button>
+        </div>
+      </div>
+      <div class="pen-divider"></div>
+      <div class="pen-side">
+        <div class="pen-side-label">RIVAL</div>
+        <div class="pen-side-btns">
+          <button id="pen-rival-made"   class="pen-btn made">✓ GOL</button>
+          <button id="pen-rival-miss"   class="pen-btn missed">✗ Fallo</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="pen-undo"  class="cb">↩ Deshacer</button>
+      <button id="pen-close" class="cb danger">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Season Modal ── -->
+<div id="season-modal" class="modal-overlay hidden">
+  <div class="modal-box season-box">
+    <div class="modal-title">📅 Estadísticas de Temporada</div>
+    <div id="season-content" class="season-content"></div>
+    <div class="modal-footer">
+      <button id="season-save"  class="modal-confirm">💾 Guardar partido actual</button>
+      <button id="season-clear" class="cb danger">🗑️ Limpiar temporada</button>
+      <button id="season-close" class="cb">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
 <script src="app.js"></script>
 </body>
 </html>

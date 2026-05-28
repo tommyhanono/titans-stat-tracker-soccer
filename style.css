@@ -744,3 +744,322 @@ thead .scol { z-index: 2; }
   .stbtn { padding: 9px 5px; font-size: 0.72em; }
   .hbtn { padding: 5px 9px; font-size: 0.76em; }
 }
+
+/* ── Positions ──────────────────────────────────────────── */
+#position-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(0,0,0,0.25);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+#position-selector.hidden { display: none; }
+
+.pos-label {
+  font-size: 0.65em;
+  color: var(--text-dim);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pos-btn {
+  background: var(--btn);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 0.7em;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.pos-btn:hover { background: var(--btn-h); color: var(--text); }
+.pos-btn.active { color: white; border-color: transparent; }
+.pos-btn[data-pos="GK"].active  { background: #6b3d9e; }
+.pos-btn[data-pos="DEF"].active { background: #1a4a7a; }
+.pos-btn[data-pos="MED"].active { background: #1a5c34; }
+.pos-btn[data-pos="DEL"].active { background: #7a2800; }
+.pos-btn[data-pos=""].active    { background: var(--border); color: var(--text-dim); }
+
+/* Position badges on player cards */
+.pi-pos {
+  font-size: 0.55em;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+.pi-pos.pos-GK  { background: #4a2b6b; color: #c89eff; }
+.pi-pos.pos-DEF { background: #0d2e52; color: #7fb8ef; }
+.pi-pos.pos-MED { background: #0d3520; color: #7dde9f; }
+.pi-pos.pos-DEL { background: #5c1800; color: #ffaa7a; }
+
+/* Position badge in stats table */
+.tbl-pos {
+  display: inline-block;
+  font-size: 0.72em;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.tbl-pos.pos-GK  { background: #4a2b6b; color: #c89eff; }
+.tbl-pos.pos-DEF { background: #0d2e52; color: #7fb8ef; }
+.tbl-pos.pos-MED { background: #0d3520; color: #7dde9f; }
+.tbl-pos.pos-DEL { background: #5c1800; color: #ffaa7a; }
+.tbl-pos.pos-\-\- { color: var(--text-dim); }
+
+/* ── Modal overlay ──────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-title {
+  font-size: 1em;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 10px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.modal-field label {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+}
+.modal-field select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.modal-confirm {
+  background: linear-gradient(135deg, #1a5c34, #27ae60);
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 20px;
+  font-size: 0.88em;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.15s;
+}
+.modal-confirm:hover { filter: brightness(1.15); }
+
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Substitution modal ─────────────────────────────────── */
+/* (uses generic .modal-* classes above) */
+
+/* ── Penalty modal ──────────────────────────────────────── */
+.penalty-box { max-width: 500px; }
+
+.pen-score {
+  text-align: center;
+  font-size: 1.4em;
+  font-weight: 800;
+  color: var(--yellow);
+  letter-spacing: 1px;
+  padding: 6px 0;
+}
+
+.pen-winner {
+  text-align: center;
+  font-size: 1em;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+.pen-winner.hidden { display: none; }
+.pen-winner.win-titans { background: rgba(39,174,96,0.2);  color: #7dde9f; border: 1px solid var(--green); }
+.pen-winner.win-rival  { background: rgba(192,57,43,0.2);  color: var(--accent2); border: 1px solid var(--accent); }
+.pen-winner.win-draw   { background: rgba(241,196,15,0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+
+.pen-table-wrap { max-height: 200px; }
+
+#penalty-table { min-width: 100%; font-size: 0.82em; }
+#penalty-table th {
+  background: var(--bg); color: var(--text-dim);
+  padding: 5px 10px; font-size: 0.75em; letter-spacing: 0.5px;
+}
+#penalty-table td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+.pen-num  { color: var(--text-dim); font-size: 0.8em; width: 24px; text-align: center; }
+.pen-t    { text-align: left; }
+.pen-r    { text-align: right; }
+.pen-sep  { color: var(--border); text-align: center; width: 12px; }
+.pen-player { color: var(--text); font-size: 0.88em; margin-right: 5px; }
+.pen-result.made { color: var(--green); font-weight: 800; font-size: 1em; }
+.pen-result.miss { color: var(--accent2); font-weight: 800; font-size: 1em; }
+.pen-empty { color: var(--border); }
+
+.pen-controls {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.pen-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pen-side-label {
+  font-size: 0.65em;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.pen-side select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8em;
+  width: 100%;
+}
+.pen-side-btns { display: flex; gap: 5px; }
+.pen-btn {
+  flex: 1;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 6px;
+  font-size: 0.8em;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.15s, transform 0.1s;
+}
+.pen-btn:active { transform: scale(0.95); }
+.pen-btn.made   { background: linear-gradient(135deg,#1a5c34,#27ae60); color: white; }
+.pen-btn.missed { background: linear-gradient(135deg,#5a1212,#922b21); color: white; }
+.pen-btn:hover  { filter: brightness(1.15); }
+.pen-divider    { width: 1px; background: var(--border); align-self: stretch; margin: 20px 0; }
+
+/* ── Season modal ───────────────────────────────────────── */
+.season-box {
+  max-width: 680px;
+  max-height: 88vh;
+}
+
+.season-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 60vh;
+  padding-right: 4px;
+}
+
+.season-empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 30px 20px;
+  font-size: 0.88em;
+  line-height: 1.7;
+}
+
+.season-record {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.sr-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 14px;
+  text-align: center;
+  min-width: 70px;
+}
+.sr-v { font-size: 1.6em; font-weight: 800; }
+.sr-l { font-size: 0.65em; color: var(--text-dim); margin-top: 2px; }
+.sr-card.wins   .sr-v { color: var(--green); }
+.sr-card.draws  .sr-v { color: var(--yellow); }
+.sr-card.losses .sr-v { color: var(--accent2); }
+.sr-card.gf     .sr-v { color: #7fb8ef; }
+.sr-card.gc     .sr-v { color: #dea07f; }
+
+.season-section-title {
+  font-size: 0.68em;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.season-tbl {
+  border-collapse: collapse;
+  font-size: 0.78em;
+  min-width: 100%;
+}
+.season-tbl th {
+  background: var(--bg); color: var(--text-dim);
+  padding: 6px 8px; white-space: nowrap; font-size: 0.75em;
+  position: sticky; top: 0;
+}
+.season-tbl td {
+  padding: 5px 8px; border-bottom: 1px solid var(--border);
+  text-align: center; white-space: nowrap;
+}
+.season-tbl td:first-child { text-align: left; }
+.season-tbl tbody tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+

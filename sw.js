@@ -1,4 +1,4 @@
-const CACHE = 'ftt-v2';
+const CACHE = 'ftt-v3';
 const LOCAL_FILES = [
   './',
   './index.html',
