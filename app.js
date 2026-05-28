@@ -24,8 +24,8 @@ const STAT_LABEL = {
 
 // ── State ──────────────────────────────────────────────────
 
-let S = null;
-let LOG = [];
+let S          = null;
+let LOG        = [];
 let clockTimer = null;
 let saveTimer  = null;
 let tableOpen  = false;
@@ -44,10 +44,10 @@ function mkStats() {
 function initState(players) {
   const stats = {}, secs = {}, onField = {}, elim = {};
   players.forEach(p => {
-    stats[p] = mkStats();
-    secs[p] = 0;
+    stats[p]   = mkStats();
+    secs[p]    = 0;
     onField[p] = false;
-    elim[p] = false;
+    elim[p]    = false;
   });
   return {
     gameName: 'Partido', rival: 'Rival',
@@ -100,7 +100,7 @@ function undo() {
   LOG.shift();
   render();
   debouncedSave();
-  toast('Acción deshecha');
+  toast('Acción deshecha ↩');
 }
 
 // ── Clock ─────────────────────────────────────────────────
@@ -135,12 +135,13 @@ function toggleClock() {
 }
 
 function nextHalf() {
-  if (S.half >= 3) { toast('Ya es Tiempo Extra'); return; }
+  if (S.half >= 3) { toast('Ya estás en Tiempo Extra'); return; }
   if (S.clockRunning) toggleClock();
   S.half++;
   S.secsElapsed = 0;
   addLog(`─── ${HALF_NAME[S.half]} iniciado ───`);
-  renderClock(); renderClockBtn();
+  renderClock();
+  renderClockBtn();
   debouncedSave();
 }
 
@@ -148,101 +149,123 @@ function nextHalf() {
 
 function selectPlayer(name) {
   S.selected = name;
-  renderBadge(); renderPlayers();
+  renderBadge();
+  renderPlayers();
 }
 
 function toggleField(name) {
   if (S.elim[name]) { toast(`${name} está expulsado`); return; }
   S.onField[name] = !S.onField[name];
-  addLog(`${name}: ${S.onField[name] ? 'Entra al campo ⬆' : 'Sale del campo ⬇'}`);
-  renderBadge(); renderPlayers(); debouncedSave();
+  addLog(`${name} ${S.onField[name] ? '▶ entró al campo' : '⬅ salió del campo'}`);
+  renderBadge();
+  renderPlayers();
+  debouncedSave();
 }
 
 function addPlayer() {
   const name = prompt('Nombre del nuevo jugador:');
-  if (!name || !name.trim()) return;
+  if (!name?.trim()) return;
   const n = name.trim();
-  if (S.players.includes(n)) { toast('Jugador ya existe'); return; }
+  if (S.players.includes(n)) { toast('Ese jugador ya existe'); return; }
   S.players.push(n);
-  S.stats[n] = mkStats();
-  S.secs[n] = 0; S.onField[n] = false; S.elim[n] = false;
-  addLog(`Jugador agregado: ${n}`);
-  render(); debouncedSave();
+  S.stats[n]   = mkStats();
+  S.secs[n]    = 0;
+  S.onField[n] = false;
+  S.elim[n]    = false;
+  addLog(`➕ Jugador agregado: ${n}`);
+  render();
+  debouncedSave();
 }
 
 function removePlayer() {
   if (!S.selected) { toast('Selecciona un jugador primero'); return; }
-  if (!confirm(`¿Eliminar a ${S.selected} del partido?`)) return;
+  if (!confirm(`¿Remover a "${S.selected}" del partido?`)) return;
   const name = S.selected;
-  S.players = S.players.filter(p => p !== name);
+  S.players   = S.players.filter(p => p !== name);
   delete S.stats[name]; delete S.secs[name];
   delete S.onField[name]; delete S.elim[name];
-  S.selected = S.players[0] || null;
-  addLog(`Jugador removido: ${name}`);
-  render(); debouncedSave();
+  S.selected  = S.players[0] || null;
+  addLog(`➖ Jugador removido: ${name}`);
+  render();
+  debouncedSave();
 }
 
 // ── Stats ─────────────────────────────────────────────────
 
 function requirePlayer() {
-  if (!S.selected) { toast('Selecciona un jugador'); return false; }
-  if (S.elim[S.selected]) { toast(`${S.selected} está expulsado`); return false; }
+  if (!S.selected)          { toast('Selecciona un jugador primero'); return false; }
+  if (S.elim[S.selected])   { toast(`${S.selected} está expulsado 🟥`); return false; }
   return true;
 }
 
-function recordShot(type, made) {
+function recordShot(type, made, btnEl) {
   if (!requirePlayer()) return;
   pushSnap();
   const p = S.selected;
   if (made) {
     S.stats[p][`${type}M`]++;
     S.stats[p][`${type}A`]++;
-    addLog(`✓ ${p}: ${SHOT_LABEL[type]} — GOL`);
+    addLog(`⚽ ${p} — ${SHOT_LABEL[type]} ANOTADO`);
+    flashEl(btnEl, 'flash-green');
+    pulseScore();
   } else {
     S.stats[p][`${type}A`]++;
-    addLog(`✗ ${p}: ${SHOT_LABEL[type]} — fallado`);
+    addLog(`✗ ${p} — ${SHOT_LABEL[type]} fallado`);
+    flashEl(btnEl, 'flash-red');
   }
-  renderScore(); renderTableIfOpen(); debouncedSave();
+  renderScore();
+  renderBadge();
+  renderTableIfOpen();
+  debouncedSave();
 }
 
-function recordStat(type) {
+function recordStat(type, btnEl) {
   if (!requirePlayer()) return;
   const p = S.selected;
-  if (type === 'tarjetasAmarillas') { handleYellow(p); return; }
-  if (type === 'tarjetasRojas')     { handleDirectRed(p); return; }
+  if (type === 'tarjetasAmarillas') { handleYellow(p, btnEl); return; }
+  if (type === 'tarjetasRojas')     { handleDirectRed(p, btnEl); return; }
   pushSnap();
   S.stats[p][type]++;
-  addLog(`${p}: ${STAT_LABEL[type]}`);
-  renderBadge(); renderTableIfOpen(); debouncedSave();
+  addLog(`${p} — ${STAT_LABEL[type]}`);
+  flashEl(btnEl, type === 'perdidas' || type === 'faltasCometidas' ? 'flash-red' : 'flash-blue');
+  renderBadge();
+  renderTableIfOpen();
+  debouncedSave();
 }
 
-function handleYellow(name) {
+function handleYellow(name, btnEl) {
   pushSnap();
   S.stats[name].tarjetasAmarillas++;
+  flashEl(btnEl, 'flash-yellow');
   if (S.stats[name].tarjetasAmarillas >= 2) {
     S.stats[name].tarjetasRojas++;
-    expulsar(name, '2 Amarillas → Roja');
+    expulsar(name, '2ª Amarilla → Roja automática');
   } else {
-    addLog(`🟨 ${name}: Tarjeta Amarilla (${S.stats[name].tarjetasAmarillas}/2)`);
+    addLog(`🟨 ${name} — Tarjeta Amarilla (${S.stats[name].tarjetasAmarillas}/2)`);
     renderBadge();
   }
-  renderTableIfOpen(); debouncedSave();
+  renderTableIfOpen();
+  debouncedSave();
 }
 
-function handleDirectRed(name) {
+function handleDirectRed(name, btnEl) {
   if (S.elim[name]) { toast(`${name} ya está expulsado`); return; }
   pushSnap();
   S.stats[name].tarjetasRojas++;
+  flashEl(btnEl, 'flash-red');
   expulsar(name, 'Tarjeta Roja Directa');
-  renderTableIfOpen(); debouncedSave();
+  renderTableIfOpen();
+  debouncedSave();
 }
 
 function expulsar(name, razon) {
-  S.elim[name] = true;
+  S.elim[name]    = true;
   S.onField[name] = false;
   if (S.selected === name) S.selected = null;
-  addLog(`🟥 ${name}: EXPULSADO — ${razon}`);
-  renderBadge(); renderPlayers();
+  addLog(`🟥 ${name} EXPULSADO — ${razon}`);
+  renderBadge();
+  renderPlayers();
+  toast(`${name} expulsado 🟥`);
 }
 
 // ── Score ─────────────────────────────────────────────────
@@ -250,7 +273,7 @@ function expulsar(name, razon) {
 function teamScore() {
   return S.players.reduce((n, p) => {
     const st = S.stats[p];
-    return n + (st.golesM||0) + (st.tirosLibresM||0) + (st.penalesM||0);
+    return n + (st.golesM || 0) + (st.tirosLibresM || 0) + (st.penalesM || 0);
   }, 0);
 }
 
@@ -262,26 +285,47 @@ function addLog(msg) {
   renderLog();
 }
 
+// ── Visual feedback ───────────────────────────────────────
+
+function flashEl(el, cls) {
+  if (!el) return;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 450);
+}
+
+function pulseScore() {
+  const el = document.getElementById('team-score');
+  if (!el) return;
+  el.classList.add('score-pulse');
+  setTimeout(() => el.classList.remove('score-pulse'), 600);
+}
+
 // ── Render ────────────────────────────────────────────────
 
 function render() {
-  renderClock(); renderClockBtn(); renderScore();
-  renderBadge(); renderPlayers(); renderLog();
+  renderClock();
+  renderClockBtn();
+  renderScore();
+  renderRivalLabel();
+  renderBadge();
+  renderPlayers();
+  renderLog();
   renderTableIfOpen();
-  const nameInput = document.getElementById('game-name');
-  if (nameInput) nameInput.value = S.gameName || '';
+  const inp = document.getElementById('game-name');
+  if (inp) inp.value = S.gameName || '';
 }
 
 function renderClock() {
   const el = document.getElementById('clock');
-  const hi = document.getElementById('half-indicator');
+  const hi = document.getElementById('half-pill');
   if (!el) return;
-  const limit = HALF_LIMIT[S.half] || 45 * 60;
-  const over  = S.secsElapsed > limit;
-  const base  = HALF_OFFSET[S.half] || 0;
+  const limit  = HALF_LIMIT[S.half] || 45 * 60;
+  const over   = S.secsElapsed > limit;
+  const base   = HALF_OFFSET[S.half] || 0;
   const normal = fmt(base + Math.min(S.secsElapsed, limit));
   el.textContent = over ? `${normal}+${fmt(S.secsElapsed - limit)}` : normal;
-  hi.textContent = HALF_NAME[S.half];
+  el.classList.toggle('overtime', over);
+  hi.textContent  = HALF_NAME[S.half];
 }
 
 function renderClockBtn() {
@@ -298,40 +342,78 @@ function renderScore() {
   if (rs) rs.textContent = S.rivalScore;
 }
 
+function renderRivalLabel() {
+  const el = document.getElementById('rival-lbl');
+  if (el) el.textContent = (S.rival || 'RIVAL').toUpperCase();
+}
+
 function renderBadge() {
   const nameEl   = document.getElementById('active-name');
   const statusEl = document.getElementById('active-status');
+  const avatarEl = document.getElementById('badge-avatar');
   if (!nameEl) return;
+
   if (!S.selected) {
-    nameEl.textContent   = '— Ninguno seleccionado —';
-    statusEl.textContent = '';
+    nameEl.textContent   = 'Selecciona un jugador';
+    statusEl.textContent = '— toca un jugador para registrar estadísticas —';
+    if (avatarEl) { avatarEl.textContent = '?'; avatarEl.className = ''; }
     return;
   }
-  const n = S.selected, st = S.stats[n];
+
+  const n  = S.selected;
+  const st = S.stats[n];
+  const idx = S.players.indexOf(n) + 1;
+
+  if (avatarEl) {
+    avatarEl.textContent = idx || '?';
+    avatarEl.className   = S.elim[n] ? 'expulsado' : S.onField[n] ? 'on-field' : '';
+  }
+
   nameEl.textContent = n;
+
   const parts = [];
-  if (S.elim[n])       parts.push('🟥 EXPULSADO');
+  if (S.elim[n])         parts.push('🟥 EXPULSADO');
   else if (S.onField[n]) parts.push('🟢 En campo');
   else                   parts.push('⚪ Banca');
-  if (st.tarjetasAmarillas > 0) parts.push(`🟨×${st.tarjetasAmarillas}`);
-  const g = (st.golesM||0)+(st.tirosLibresM||0)+(st.penalesM||0);
-  if (g > 0) parts.push(`⚽${g}`);
-  statusEl.textContent = parts.join(' · ');
+
+  if (st.tarjetasAmarillas === 1) parts.push('🟨 1 amarilla');
+  if (st.tarjetasAmarillas >= 2)  parts.push('🟨🟨 2 amarillas');
+
+  const gol = (st.golesM || 0) + (st.tirosLibresM || 0) + (st.penalesM || 0);
+  if (gol > 0) parts.push(`⚽ ${gol} gol${gol > 1 ? 'es' : ''}`);
+  if (st.asistencias > 0) parts.push(`🅰️ ${st.asistencias} asist.`);
+
+  statusEl.textContent = parts.join('  ·  ');
 }
 
 function renderPlayers() {
   const c = document.getElementById('player-list');
   if (!c) return;
-  c.innerHTML = S.players.map(p => {
+
+  // ── FIX: use data attributes, NO inline onclick ──
+  c.innerHTML = S.players.map((p, i) => {
     const sel  = S.selected === p;
-    const on   = S.onField[p];
+    const on   = S.onField[p] && !S.elim[p];
     const dead = S.elim[p];
-    return `<div class="pi${sel?' selected':''}${dead?' elim':''}">
-      <button class="pi-sel" onclick="selectPlayer(${JSON.stringify(p)})">
-        ${esc(p)}${dead?' 🟥':''}
+    const am   = S.stats[p]?.tarjetasAmarillas || 0;
+    const gol  = (S.stats[p]?.golesM || 0) + (S.stats[p]?.tirosLibresM || 0) + (S.stats[p]?.penalesM || 0);
+
+    let cardBadge = '';
+    if (dead)     cardBadge = '<span class="pi-card red">🟥</span>';
+    else if (am >= 2) cardBadge = '<span class="pi-card red">🟥</span>';
+    else if (am === 1) cardBadge = '<span class="pi-card yellow">🟨</span>';
+
+    const golBadge = gol > 0 ? `<span class="pi-goals">⚽${gol}</span>` : '';
+
+    return `<div class="pi${sel ? ' selected' : ''}${dead ? ' elim' : ''}${on ? ' on-field' : ''}">
+      <button class="pi-sel" data-player="${esc(p)}" data-action="select">
+        <span class="pi-num">${i + 1}</span>
+        <span class="pi-name">${esc(p)}</span>
+        ${cardBadge}${golBadge}
       </button>
-      <button class="pi-field${on?' on':''}" onclick="toggleField(${JSON.stringify(p)})">
-        ${on?'🟢':'⚪'}
+      <button class="pi-field${on ? ' on' : ''}" data-player="${esc(p)}" data-action="field"
+              title="${on ? 'Sacar del campo' : 'Poner en campo'}">
+        ${on ? '🟢' : '⚪'}
       </button>
     </div>`;
   }).join('');
@@ -340,6 +422,7 @@ function renderPlayers() {
 function renderLog() {
   const c = document.getElementById('log-entries');
   if (!c) return;
+  if (!LOG.length) { c.innerHTML = '<div class="log-empty">Sin acciones aún</div>'; return; }
   c.innerHTML = LOG.map(e => `<div class="log-entry">${esc(e)}</div>`).join('');
 }
 
@@ -353,26 +436,27 @@ function renderTable() {
   if (!tbody) return;
   tbody.innerHTML = S.players.map(p => {
     const st  = S.stats[p];
-    const min = Math.floor((S.secs[p]||0) / 60);
-    const gol = (st.golesM||0)+(st.tirosLibresM||0)+(st.penalesM||0);
-    const pct = (m, a) => a > 0 ? Math.round(m/a*100)+'%' : '—';
-    const amC = st.tarjetasAmarillas > 0 ? ' class="c-am"' : '';
-    const roC = st.tarjetasRojas > 0     ? ' class="c-ro"' : '';
-    return `<tr class="${S.elim[p]?'row-elim':''}">
-      <td class="scol">${esc(p)}</td>
+    const min = Math.floor((S.secs[p] || 0) / 60);
+    const gol = (st.golesM || 0) + (st.tirosLibresM || 0) + (st.penalesM || 0);
+    const pct = (m, a) => a > 0 ? Math.round(m / a * 100) + '%' : '—';
+    return `<tr class="${S.elim[p] ? 'row-elim' : S.onField[p] ? 'row-on' : ''}">
+      <td class="scol">
+        <span class="tbl-num">${S.players.indexOf(p) + 1}</span>
+        ${esc(p)}
+      </td>
       <td>${min}</td>
-      <td>${gol}</td>
+      <td class="td-bold">${gol}</td>
       <td>${st.golesM}/${st.golesA}</td>
       <td>${st.tirosLibresM}/${st.tirosLibresA}</td>
       <td>${st.penalesM}/${st.penalesA}</td>
-      <td>${pct(st.golesM,st.golesA)}</td>
-      <td>${pct(st.tirosLibresM,st.tirosLibresA)}</td>
-      <td>${pct(st.penalesM,st.penalesA)}</td>
+      <td>${pct(st.golesM, st.golesA)}</td>
+      <td>${pct(st.tirosLibresM, st.tirosLibresA)}</td>
+      <td>${pct(st.penalesM, st.penalesA)}</td>
       <td>${st.asistencias}</td>
       <td>${st.faltasCometidas}</td>
       <td>${st.faltasRecibidas}</td>
-      <td${amC}>${st.tarjetasAmarillas}</td>
-      <td${roC}>${st.tarjetasRojas}</td>
+      <td class="${st.tarjetasAmarillas > 0 ? 'c-am' : ''}">${st.tarjetasAmarillas}</td>
+      <td class="${st.tarjetasRojas > 0 ? 'c-ro' : ''}">${st.tarjetasRojas}</td>
       <td>${st.fueraLugar}</td>
       <td>${st.recuperaciones}</td>
       <td>${st.perdidas}</td>
@@ -385,43 +469,42 @@ function renderTable() {
 function generateReport() {
   const rival = prompt('Nombre del equipo rival:', S.rival || 'Rival') || S.rival || 'Rival';
   S.rival = rival;
+  renderRivalLabel();
 
   const ts = teamScore(), rs = S.rivalScore;
   const result = ts > rs ? 'Victoria' : ts < rs ? 'Derrota' : 'Empate';
   const rColor = ts > rs ? '#27ae60' : ts < rs ? '#c0392b' : '#f39c12';
 
   const pd = S.players.map(p => {
-    const st = S.stats[p];
-    const min = Math.floor((S.secs[p]||0)/60);
-    const gol = (st.golesM||0)+(st.tirosLibresM||0)+(st.penalesM||0);
-    const totalA = (st.golesA||0)+(st.tirosLibresA||0)+(st.penalesA||0);
+    const st  = S.stats[p];
+    const min = Math.floor((S.secs[p] || 0) / 60);
+    const gol = (st.golesM || 0) + (st.tirosLibresM || 0) + (st.penalesM || 0);
+    const totalA = (st.golesA || 0) + (st.tirosLibresA || 0) + (st.penalesA || 0);
     return { p, min, gol, totalA, st };
   });
 
-  const totalGol  = pd.reduce((n,x) => n+x.gol, 0);
-  const totalTiro = pd.reduce((n,x) => n+x.totalA, 0);
-  const efect     = totalTiro > 0 ? Math.round(totalGol/totalTiro*100) : 0;
-  const totalFC   = pd.reduce((n,x) => n+x.st.faltasCometidas, 0);
-  const totalPerd = pd.reduce((n,x) => n+x.st.perdidas, 0);
-  const totalCard = pd.reduce((n,x) => n+x.st.tarjetasAmarillas+x.st.tarjetasRojas, 0);
-  const totalAST  = pd.reduce((n,x) => n+x.st.asistencias, 0);
-  const totalREC  = pd.reduce((n,x) => n+x.st.recuperaciones, 0);
+  const totalGol  = pd.reduce((n, x) => n + x.gol, 0);
+  const totalTiro = pd.reduce((n, x) => n + x.totalA, 0);
+  const efect     = totalTiro > 0 ? Math.round(totalGol / totalTiro * 100) : 0;
+  const totalFC   = pd.reduce((n, x) => n + x.st.faltasCometidas, 0);
+  const totalPerd = pd.reduce((n, x) => n + x.st.perdidas, 0);
+  const totalCard = pd.reduce((n, x) => n + x.st.tarjetasAmarillas + x.st.tarjetasRojas, 0);
+  const totalAST  = pd.reduce((n, x) => n + x.st.asistencias, 0);
+  const totalREC  = pd.reduce((n, x) => n + x.st.recuperaciones, 0);
 
-  const topGol = [...pd].sort((a,b)=>b.gol-a.gol)[0];
-  const topAST = [...pd].sort((a,b)=>b.st.asistencias-a.st.asistencias)[0];
-  const topREC = [...pd].sort((a,b)=>b.st.recuperaciones-a.st.recuperaciones)[0];
+  const topGol = [...pd].sort((a, b) => b.gol - a.gol)[0];
+  const topAST = [...pd].sort((a, b) => b.st.asistencias - a.st.asistencias)[0];
+  const topREC = [...pd].sort((a, b) => b.st.recuperaciones - a.st.recuperaciones)[0];
 
-  const rows = pd.map(({p,min,gol,st}) => {
-    const pctT  = st.golesA>0 ? Math.round(st.golesM/st.golesA*100)+'%' : '—';
-    const pctTL = st.tirosLibresA>0 ? Math.round(st.tirosLibresM/st.tirosLibresA*100)+'%' : '—';
-    const pctP  = st.penalesA>0 ? Math.round(st.penalesM/st.penalesA*100)+'%' : '—';
+  const tableRows = pd.map(({ p, min, gol, st }) => {
+    const pT  = st.golesA > 0        ? Math.round(st.golesM / st.golesA * 100)               + '%' : '—';
+    const pTL = st.tirosLibresA > 0  ? Math.round(st.tirosLibresM / st.tirosLibresA * 100)   + '%' : '—';
+    const pP  = st.penalesA > 0      ? Math.round(st.penalesM / st.penalesA * 100)            + '%' : '—';
     return `<tr>
       <td style="text-align:left;font-weight:600">${esc(p)}</td>
       <td>${min}</td><td><b>${gol}</b></td>
-      <td>${st.golesM}/${st.golesA}</td>
-      <td>${st.tirosLibresM}/${st.tirosLibresA}</td>
-      <td>${st.penalesM}/${st.penalesA}</td>
-      <td>${pctT}</td><td>${pctTL}</td><td>${pctP}</td>
+      <td>${st.golesM}/${st.golesA}</td><td>${st.tirosLibresM}/${st.tirosLibresA}</td><td>${st.penalesM}/${st.penalesA}</td>
+      <td>${pT}</td><td>${pTL}</td><td>${pP}</td>
       <td>${st.asistencias}</td><td>${st.faltasCometidas}</td><td>${st.faltasRecibidas}</td>
       <td style="color:${st.tarjetasAmarillas>0?'#e6b800':'inherit'}">${st.tarjetasAmarillas}</td>
       <td style="color:${st.tarjetasRojas>0?'#c0392b':'inherit'}">${st.tarjetasRojas}</td>
@@ -430,53 +513,52 @@ function generateReport() {
   }).join('');
 
   const recom = [];
-  if (efect < 30) recom.push('Mejorar la definición — practicar tiro al arco en entrenamiento.');
-  if (totalPerd > 5) recom.push('Reducir pérdidas de balón — mejorar la distribución bajo presión.');
-  if (totalFC > 10) recom.push('Reducir faltas cometidas para evitar tiros libres en contra.');
-  if (totalCard > 3) recom.push('Mejorar la disciplina — alto número de tarjetas.');
+  if (efect < 30)    recom.push('Mejorar la definición — practicar tiro al arco en entrenamiento.');
+  if (totalPerd > 5) recom.push('Reducir pérdidas de balón — mejorar distribución bajo presión.');
+  if (totalFC > 10)  recom.push('Reducir faltas cometidas para evitar tiros libres en contra.');
+  if (totalCard > 3) recom.push('Mejorar la disciplina — alto número de tarjetas en este partido.');
   if (result === 'Victoria') recom.push('Excelente rendimiento colectivo — mantener el nivel.');
-  if (result === 'Derrota')  recom.push('Analizar fases defensivas y ofensivas para el próximo partido.');
+  if (result === 'Derrota')  recom.push('Analizar las fases defensivas y ofensivas del partido.');
   recom.push('Continuar reforzando la comunicación y el trabajo en equipo.');
 
   const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <title>Reporte — ${esc(S.gameName)}</title>
 <style>
-  body{font-family:-apple-system,Arial,sans-serif;max-width:960px;margin:0 auto;padding:24px;color:#222}
-  h1{color:#c0392b;text-align:center;margin-bottom:4px}
-  h2{color:#2c3e50;border-bottom:2px solid #c0392b;padding-bottom:6px;margin-top:28px}
-  .score{text-align:center;font-size:3.2em;font-weight:700;margin:16px 0 4px}
-  .result{text-align:center;font-size:1.5em;font-weight:700;color:${rColor};margin-bottom:20px}
-  .cards{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:16px 0}
-  .card{background:#f5f5f5;border:1px solid #ddd;border-radius:10px;padding:14px 20px;text-align:center;min-width:90px}
-  .card .v{font-size:2em;font-weight:700;color:#c0392b}
-  .card .l{font-size:.8em;color:#666;margin-top:4px}
-  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.8em}
-  th{background:#2c3e50;color:white;padding:7px 5px;white-space:nowrap}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,Arial,sans-serif;max-width:980px;margin:0 auto;padding:28px;color:#222;background:#fff}
+  h1{color:#c0392b;text-align:center;font-size:1.8em;margin-bottom:2px}
+  h2{color:#2c3e50;border-bottom:3px solid #c0392b;padding-bottom:6px;margin-top:30px}
+  .sub{text-align:center;color:#888;margin-bottom:20px}
+  .scoreboard{text-align:center;background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;border-radius:16px;padding:24px;margin:20px 0}
+  .scoreboard .teams{display:flex;justify-content:center;align-items:center;gap:20px;font-size:3em;font-weight:800}
+  .scoreboard .result{font-size:1.2em;margin-top:8px;color:${rColor};font-weight:700}
+  .cards{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:16px 0}
+  .card{background:#f8f9fa;border:1px solid #dee2e6;border-radius:10px;padding:12px 18px;text-align:center;min-width:80px}
+  .card .v{font-size:1.8em;font-weight:800;color:#c0392b}
+  .card .l{font-size:.78em;color:#666;margin-top:3px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:.8em}
+  th{background:#2c3e50;color:white;padding:7px 5px;white-space:nowrap;font-size:.78em}
   td{padding:5px;border-bottom:1px solid #eee;text-align:center}
-  tr:hover{background:#fafafa}
+  tr:nth-child(even){background:#f9f9f9}
   .recs{background:#eef6ff;border-left:4px solid #3498db;padding:14px 18px;border-radius:4px}
-  .recs ul{margin:8px 0 0 18px}
-  .recs li{margin:5px 0}
-  .no-print{text-align:center;margin-bottom:18px}
-  .pbtn{background:#c0392b;color:white;border:none;padding:11px 26px;font-size:1em;border-radius:7px;cursor:pointer}
+  .recs ul{margin:8px 0 0 18px}.recs li{margin:5px 0;line-height:1.5}
+  .no-print{text-align:center;margin-bottom:20px}
+  .pbtn{background:#c0392b;color:white;border:none;padding:12px 28px;font-size:1em;border-radius:8px;cursor:pointer;font-weight:600}
   @media print{.no-print{display:none}}
 </style></head><body>
 <div class="no-print"><button class="pbtn" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button></div>
-<h1>Football Titans Tracker</h1>
-<p style="text-align:center;color:#888;margin-bottom:16px">${esc(S.gameName)} &nbsp;·&nbsp; ${new Date().toLocaleDateString('es')}</p>
-<div class="score">Titans ${ts} &nbsp;—&nbsp; ${rs} ${esc(rival)}</div>
-<div class="result">${result}</div>
-
+<h1>⚽ Football Titans Tracker</h1>
+<p class="sub">${esc(S.gameName)} · ${new Date().toLocaleDateString('es')}</p>
+<div class="scoreboard">
+  <div class="teams">Titans ${ts} — ${rs} ${esc(rival)}</div>
+  <div class="result">${result}</div>
+</div>
 <h2>Resumen Ejecutivo</h2>
-<p>
-  El equipo ${result === 'Victoria' ? 'consiguió una <b>victoria</b>' : result === 'Derrota' ? 'cayó en <b>derrota</b>' : 'igualó'}
-  ${ts}–${rs} ante ${esc(rival)}.
-  ${topGol && topGol.gol > 0 ? `Máximo goleador: <b>${esc(topGol.p)}</b> (${topGol.gol} gol${topGol.gol>1?'es':''}).` : 'El equipo no marcó goles.'}
-  ${topAST && topAST.st.asistencias > 0 ? `<b>${esc(topAST.p)}</b> lideró en asistencias con ${topAST.st.asistencias}.` : ''}
-  Efectividad de tiro: <b>${efect}%</b> (${totalGol}/${totalTiro}).
-  ${totalCard > 0 ? `Se recibieron <b>${totalCard}</b> tarjeta${totalCard>1?'s':''}.` : 'Sin tarjetas — excelente disciplina.'}
-</p>
-
+<p>El equipo ${result === 'Victoria' ? 'consiguió una <b>victoria</b>' : result === 'Derrota' ? 'cayó en <b>derrota</b>' : '<b>igualó</b>'} ${ts}–${rs} ante ${esc(rival)}.
+${topGol?.gol > 0 ? `Máximo goleador: <b>${esc(topGol.p)}</b> con ${topGol.gol} gol${topGol.gol > 1 ? 'es' : ''}.` : 'El equipo no anotó goles.'}
+${topAST?.st.asistencias > 0 ? `<b>${esc(topAST.p)}</b> lideró en asistencias con ${topAST.st.asistencias}.` : ''}
+Efectividad de tiro: <b>${efect}%</b> (${totalGol}/${totalTiro}).
+${totalCard > 0 ? `Se recibieron <b>${totalCard}</b> tarjeta${totalCard > 1 ? 's' : ''}.` : 'Sin tarjetas — excelente disciplina. ✅'}</p>
 <h2>Estadísticas del Equipo</h2>
 <div class="cards">
   <div class="card"><div class="v">${totalGol}</div><div class="l">Goles</div></div>
@@ -488,31 +570,21 @@ function generateReport() {
   <div class="card"><div class="v">${totalFC}</div><div class="l">Faltas Comet.</div></div>
   <div class="card"><div class="v">${totalCard}</div><div class="l">Tarjetas</div></div>
 </div>
-
 <h2>Estadísticas Individuales</h2>
-<table>
-<thead><tr>
-  <th>Jugador</th><th>MIN</th><th>GOL</th>
-  <th>T M/A</th><th>TL M/A</th><th>P M/A</th>
-  <th>%T</th><th>%TL</th><th>%P</th>
-  <th>AST</th><th>FC</th><th>FR</th>
+<table><thead><tr>
+  <th>Jugador</th><th>MIN</th><th>GOL</th><th>T M/A</th><th>TL M/A</th><th>P M/A</th>
+  <th>%T</th><th>%TL</th><th>%P</th><th>AST</th><th>FC</th><th>FR</th>
   <th>T.AM</th><th>T.RO</th><th>FUERA</th><th>REC</th><th>PERD</th>
-</tr></thead>
-<tbody>${rows}</tbody>
-</table>
-
+</tr></thead><tbody>${tableRows}</tbody></table>
 <h2>Mejores del Partido</h2>
-${topGol && topGol.gol > 0 ? `<p>⚽ <b>Máximo Goleador:</b> ${esc(topGol.p)} — ${topGol.gol} gol${topGol.gol>1?'es':''}</p>` : ''}
-${topAST && topAST.st.asistencias > 0 ? `<p>🅰️ <b>Mejor Asistidor:</b> ${esc(topAST.p)} — ${topAST.st.asistencias} asistencia${topAST.st.asistencias>1?'s':''}</p>` : ''}
-${topREC && topREC.st.recuperaciones > 0 ? `<p>🛡️ <b>Más Recuperaciones:</b> ${esc(topREC.p)} — ${topREC.st.recuperaciones}</p>` : ''}
-
+${topGol?.gol > 0 ? `<p>⚽ <b>Máximo Goleador:</b> ${esc(topGol.p)} — ${topGol.gol} gol${topGol.gol > 1 ? 'es' : ''}</p>` : ''}
+${topAST?.st.asistencias > 0 ? `<p>🅰️ <b>Mejor Asistidor:</b> ${esc(topAST.p)} — ${topAST.st.asistencias} asistencia${topAST.st.asistencias > 1 ? 's' : ''}</p>` : ''}
+${topREC?.st.recuperaciones > 0 ? `<p>🛡️ <b>Más Recuperaciones:</b> ${esc(topREC.p)} — ${topREC.st.recuperaciones}</p>` : ''}
 <h2>Recomendaciones</h2>
-<div class="recs"><ul>${recom.map(r=>`<li>${r}</li>`).join('')}</ul></div>
-
-<p style="text-align:center;color:#aaa;margin-top:30px;font-size:.78em">
-  Generado por Football Titans Tracker &nbsp;·&nbsp; ${new Date().toLocaleString('es')}
-</p>
-</body></html>`;
+<div class="recs"><ul>${recom.map(r => `<li>${r}</li>`).join('')}</ul></div>
+<p style="text-align:center;color:#bbb;margin-top:30px;font-size:.75em">
+  Football Titans Tracker · ${new Date().toLocaleString('es')}
+</p></body></html>`;
 
   const w = window.open('', '_blank');
   w.document.write(html);
@@ -527,13 +599,13 @@ function exportExcel() {
                   'AST','FC','FR','T.AM','T.RO','FUERA','REC','PERD'];
   const data = [header, ...S.players.map(p => {
     const st  = S.stats[p];
-    const min = Math.floor((S.secs[p]||0)/60);
-    const gol = (st.golesM||0)+(st.tirosLibresM||0)+(st.penalesM||0);
-    const pct = (m,a) => a > 0 ? Math.round(m/a*100) : 0;
+    const min = Math.floor((S.secs[p] || 0) / 60);
+    const gol = (st.golesM || 0) + (st.tirosLibresM || 0) + (st.penalesM || 0);
+    const pct = (m, a) => a > 0 ? Math.round(m / a * 100) : 0;
     return [p, min, gol,
-      st.golesM, st.golesA, pct(st.golesM,st.golesA),
-      st.tirosLibresM, st.tirosLibresA, pct(st.tirosLibresM,st.tirosLibresA),
-      st.penalesM, st.penalesA, pct(st.penalesM,st.penalesA),
+      st.golesM, st.golesA, pct(st.golesM, st.golesA),
+      st.tirosLibresM, st.tirosLibresA, pct(st.tirosLibresM, st.tirosLibresA),
+      st.penalesM, st.penalesA, pct(st.penalesM, st.penalesA),
       st.asistencias, st.faltasCometidas, st.faltasRecibidas,
       st.tarjetasAmarillas, st.tarjetasRojas,
       st.fueraLugar, st.recuperaciones, st.perdidas];
@@ -542,34 +614,39 @@ function exportExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Estadísticas');
   XLSX.writeFile(wb, `${S.gameName || 'partido'}-stats.xlsx`);
+  toast('Excel descargado ✓');
 }
 
 // ── New Game ──────────────────────────────────────────────
 
 function newGame() {
-  if (!confirm('¿Iniciar nuevo partido? Se borrarán las estadísticas actuales.')) return;
-  const rival = prompt('Nombre del equipo rival:') || 'Rival';
-  const name  = prompt('Nombre del partido:') || 'Partido';
+  if (!confirm('¿Iniciar nuevo partido? Las estadísticas actuales se borrarán.')) return;
+  const rival = prompt('Nombre del equipo rival:', S.rival || 'Rival') || 'Rival';
+  const name  = prompt('Nombre del partido:', 'Partido') || 'Partido';
   if (S.clockRunning) toggleClock();
   const players = [...S.players];
   S = initState(players);
-  S.rival = rival; S.gameName = name;
+  S.rival    = rival;
+  S.gameName = name;
   LOG = [];
-  render(); persist();
-  toast('Nuevo partido iniciado');
+  render();
+  persist();
+  toast('¡Nuevo partido iniciado! ⚽');
 }
 
 // ── Save / Load ───────────────────────────────────────────
 
 function saveGame() {
-  persist(); toast('Partida guardada ✓');
+  persist();
+  toast('Guardado ✓');
 }
 
 function loadGame() {
   if (!confirm('¿Cargar la última partida guardada?')) return;
   if (loadFromStorage()) {
     if (S.clockRunning) { S.clockRunning = false; clockTimer = null; }
-    render(); toast('Partida cargada ✓');
+    render();
+    toast('Partida cargada ✓');
   } else {
     toast('No hay partida guardada');
   }
@@ -583,23 +660,36 @@ function toast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+  el._t = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
 // ── Utility ───────────────────────────────────────────────
 
 function esc(s) {
   return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// ── Events ───────────────────────────────────────────────
+// ── Events ────────────────────────────────────────────────
 
 function bindEvents() {
+  // Clock
   document.getElementById('btn-clock').addEventListener('click', toggleClock);
   document.getElementById('btn-half').addEventListener('click', nextHalf);
 
+  // ── Player list: event delegation (fixes the onclick quote-breaking bug) ──
+  document.getElementById('player-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    e.stopPropagation();
+    const p = btn.dataset.player;
+    if (btn.dataset.action === 'select') selectPlayer(p);
+    if (btn.dataset.action === 'field')  toggleField(p);
+  });
+
+  // Control buttons
   document.getElementById('btn-undo').addEventListener('click', undo);
   document.getElementById('btn-save').addEventListener('click', saveGame);
   document.getElementById('btn-load').addEventListener('click', loadGame);
@@ -609,18 +699,26 @@ function bindEvents() {
   document.getElementById('btn-remove').addEventListener('click', removePlayer);
   document.getElementById('btn-excel').addEventListener('click', exportExcel);
 
+  // Stats table toggle
   document.getElementById('btn-table').addEventListener('click', () => {
     tableOpen = !tableOpen;
     document.getElementById('stats-panel').classList.toggle('hidden', !tableOpen);
     document.getElementById('btn-table').classList.toggle('active', tableOpen);
     if (tableOpen) renderTable();
   });
+  document.getElementById('btn-close-table').addEventListener('click', () => {
+    tableOpen = false;
+    document.getElementById('stats-panel').classList.add('hidden');
+    document.getElementById('btn-table').classList.remove('active');
+  });
 
+  // Game name
   document.getElementById('game-name').addEventListener('input', e => {
     S.gameName = e.target.value;
     debouncedSave();
   });
 
+  // Rival score
   document.getElementById('rival-minus').addEventListener('click', () => {
     if (S.rivalScore > 0) { S.rivalScore--; renderScore(); debouncedSave(); }
   });
@@ -628,12 +726,15 @@ function bindEvents() {
     S.rivalScore++; renderScore(); debouncedSave();
   });
 
+  // Shot buttons — pass element for flash feedback
   document.querySelectorAll('.sbtn.made').forEach(btn =>
-    btn.addEventListener('click', () => recordShot(btn.dataset.type, true)));
+    btn.addEventListener('click', () => recordShot(btn.dataset.type, true, btn)));
   document.querySelectorAll('.sbtn.missed').forEach(btn =>
-    btn.addEventListener('click', () => recordShot(btn.dataset.type, false)));
+    btn.addEventListener('click', () => recordShot(btn.dataset.type, false, btn)));
+
+  // Stat buttons
   document.querySelectorAll('.stbtn').forEach(btn =>
-    btn.addEventListener('click', () => recordStat(btn.dataset.stat)));
+    btn.addEventListener('click', () => recordStat(btn.dataset.stat, btn)));
 }
 
 // ── Init ─────────────────────────────────────────────────
@@ -642,12 +743,11 @@ function init() {
   if (!loadFromStorage()) {
     S = initState(DEFAULT_PLAYERS);
   } else if (S.clockRunning) {
-    S.clockRunning = false; clockTimer = null;
+    S.clockRunning = false;
+    clockTimer = null;
   }
-
   bindEvents();
   render();
-
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }

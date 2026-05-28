@@ -15,132 +15,151 @@
 <body>
 <div id="app">
 
-  <!-- Header -->
+  <!-- ── Header ── -->
   <header id="header">
-    <div class="hrow">
-      <input id="game-name" type="text" placeholder="Nombre del Partido" autocomplete="off">
-      <div class="clock-box">
-        <span id="half-indicator">1T</span>
+    <div class="hrow hrow-top">
+      <input id="game-name" type="text" placeholder="Nombre del Partido" autocomplete="off" spellcheck="false">
+      <div class="clock-wrap">
+        <span id="half-pill">1T</span>
         <span id="clock">0:00</span>
       </div>
-      <div class="score-box">
-        <span id="team-score">0</span>
-        <span class="score-sep">:</span>
-        <div class="rival-adj">
-          <button id="rival-minus" aria-label="Quitar gol rival">−</button>
+      <div class="score-wrap">
+        <div class="score-side">
+          <span class="score-team-name">TITANS</span>
+          <span id="team-score">0</span>
+        </div>
+        <span class="score-dash">—</span>
+        <div class="score-side rival">
           <span id="rival-score">0</span>
-          <button id="rival-plus" aria-label="Agregar gol rival">+</button>
+          <span class="score-team-name" id="rival-lbl">RIVAL</span>
+          <div class="rival-adj">
+            <button id="rival-minus" aria-label="Quitar gol rival">−</button>
+            <button id="rival-plus"  aria-label="Agregar gol rival">+</button>
+          </div>
         </div>
       </div>
     </div>
-    <div class="hrow ctrl-row">
-      <button id="btn-clock" class="hbtn">▶ Iniciar</button>
+    <div class="hrow hrow-ctrl">
+      <button id="btn-clock" class="hbtn clock-btn">▶ Iniciar</button>
       <button id="btn-half"  class="hbtn">⏭ Sig. Tiempo</button>
+      <div class="spacer"></div>
+      <span class="header-hint" id="header-hint"></span>
     </div>
   </header>
 
-  <!-- Main -->
+  <!-- ── Main ── -->
   <div id="main">
 
     <!-- Left Panel -->
     <div id="left-panel">
-      <!-- Active player badge -->
+
+      <!-- Active badge -->
       <div id="active-badge">
-        <span id="active-name">— Ninguno seleccionado —</span>
-        <span id="active-status"></span>
+        <div id="badge-avatar">?</div>
+        <div id="badge-info">
+          <span id="active-name">Selecciona un jugador</span>
+          <span id="active-status">— toca un jugador para registrar estadísticas —</span>
+        </div>
       </div>
 
       <!-- Player list -->
-      <div id="player-list"></div>
+      <div id="player-list">
+        <!-- rendered by JS -->
+      </div>
 
-      <!-- Action log (landscape only) -->
+      <!-- Log (landscape only) -->
       <div id="action-log">
+        <div class="log-title">Acciones del Partido</div>
         <div id="log-entries"></div>
       </div>
 
       <!-- Control buttons -->
       <div id="ctrl-btns">
-        <button id="btn-undo">↩ Deshacer</button>
-        <button id="btn-save">💾 Guardar</button>
-        <button id="btn-load">📂 Cargar</button>
-        <button id="btn-report">📋 Reporte</button>
-        <button id="btn-new">🔄 Nuevo</button>
-        <button id="btn-add">+ Jugador</button>
-        <button id="btn-remove">− Jugador</button>
-        <button id="btn-table">📊 Tabla</button>
-        <button id="btn-excel">📥 Excel</button>
+        <button id="btn-undo"   class="cb">↩ Deshacer</button>
+        <button id="btn-save"   class="cb">💾 Guardar</button>
+        <button id="btn-load"   class="cb">📂 Cargar</button>
+        <button id="btn-report" class="cb">📋 Reporte</button>
+        <button id="btn-new"    class="cb danger">🔄 Nuevo</button>
+        <button id="btn-add"    class="cb">＋ Jugador</button>
+        <button id="btn-remove" class="cb">－ Jugador</button>
+        <button id="btn-table"  class="cb">📊 Tabla</button>
+        <button id="btn-excel"  class="cb">📥 Excel</button>
       </div>
     </div>
 
     <!-- Right Panel -->
     <div id="right-panel">
 
-      <!-- Shots section -->
-      <div>
-        <div class="section-title">TIROS</div>
+      <!-- Shots card -->
+      <div class="rcard">
+        <div class="section-title">⚽ TIROS AL ARCO</div>
         <div class="shot-grid">
           <div class="shot-row">
-            <span class="shot-lbl">Gol (juego)</span>
-            <button class="sbtn made"   data-type="goles">✓</button>
-            <button class="sbtn missed" data-type="goles">✗</button>
+            <span class="shot-lbl">
+              <span class="shot-lbl-main">Gol</span>
+              <span class="shot-lbl-sub">jugada abierta</span>
+            </span>
+            <button class="sbtn made"   data-type="goles">✓ GOL</button>
+            <button class="sbtn missed" data-type="goles">✗ Fallo</button>
           </div>
           <div class="shot-row">
-            <span class="shot-lbl">Tiro Libre</span>
-            <button class="sbtn made"   data-type="tirosLibres">✓</button>
-            <button class="sbtn missed" data-type="tirosLibres">✗</button>
+            <span class="shot-lbl">
+              <span class="shot-lbl-main">Tiro Libre</span>
+              <span class="shot-lbl-sub">fuera del área</span>
+            </span>
+            <button class="sbtn made"   data-type="tirosLibres">✓ GOL</button>
+            <button class="sbtn missed" data-type="tirosLibres">✗ Fallo</button>
           </div>
           <div class="shot-row">
-            <span class="shot-lbl">Penal</span>
-            <button class="sbtn made"   data-type="penales">✓</button>
-            <button class="sbtn missed" data-type="penales">✗</button>
+            <span class="shot-lbl">
+              <span class="shot-lbl-main">Penal</span>
+              <span class="shot-lbl-sub">punto del penal</span>
+            </span>
+            <button class="sbtn made"   data-type="penales">✓ GOL</button>
+            <button class="sbtn missed" data-type="penales">✗ Fallo</button>
           </div>
         </div>
       </div>
 
-      <!-- Stats section -->
-      <div>
-        <div class="section-title">ESTADÍSTICAS</div>
+      <!-- Stats card -->
+      <div class="rcard">
+        <div class="section-title">📊 ESTADÍSTICAS</div>
         <div class="stat-grid">
-          <button class="stbtn" data-stat="asistencias">Asistencia</button>
-          <button class="stbtn" data-stat="faltasCometidas">Falta Cometida</button>
-          <button class="stbtn" data-stat="faltasRecibidas">Falta Recibida</button>
-          <button class="stbtn amarilla" data-stat="tarjetasAmarillas">🟨 Tarjeta Amarilla</button>
-          <button class="stbtn roja"     data-stat="tarjetasRojas">🟥 Tarjeta Roja</button>
-          <button class="stbtn" data-stat="fueraLugar">Fuera de Lugar</button>
-          <button class="stbtn" data-stat="recuperaciones">Recuperación</button>
-          <button class="stbtn" data-stat="perdidas">Pérdida</button>
+          <button class="stbtn positive"  data-stat="asistencias">🅰️ Asistencia</button>
+          <button class="stbtn positive"  data-stat="recuperaciones">💪 Recuperación</button>
+          <button class="stbtn neutral"   data-stat="faltasRecibidas">🛡️ Falta Recibida</button>
+          <button class="stbtn neutral"   data-stat="fueraLugar">🚩 Fuera de Lugar</button>
+          <button class="stbtn negative"  data-stat="faltasCometidas">⚠️ Falta Cometida</button>
+          <button class="stbtn negative"  data-stat="perdidas">💸 Pérdida</button>
+          <button class="stbtn amarilla"  data-stat="tarjetasAmarillas">🟨 T. Amarilla</button>
+          <button class="stbtn roja"      data-stat="tarjetasRojas">🟥 T. Roja</button>
         </div>
       </div>
 
     </div><!-- /right-panel -->
   </div><!-- /main -->
 
-  <!-- Stats table panel -->
+  <!-- Stats table (toggled) -->
   <div id="stats-panel" class="hidden">
-    <table id="stats-tbl">
-      <thead>
-        <tr>
-          <th class="scol">Jugador</th>
-          <th>MIN</th>
-          <th>GOL</th>
-          <th>T M/A</th>
-          <th>TL M/A</th>
-          <th>P M/A</th>
-          <th>%T</th>
-          <th>%TL</th>
-          <th>%P</th>
-          <th>AST</th>
-          <th>FC</th>
-          <th>FR</th>
-          <th>T.AM</th>
-          <th>T.RO</th>
-          <th>FUERA</th>
-          <th>REC</th>
-          <th>PERD</th>
-        </tr>
-      </thead>
-      <tbody id="stats-tbody"></tbody>
-    </table>
+    <div class="table-header">
+      <span>Tabla de Estadísticas</span>
+      <button id="btn-close-table">✕</button>
+    </div>
+    <div class="table-scroll">
+      <table id="stats-tbl">
+        <thead>
+          <tr>
+            <th class="scol">Jugador</th>
+            <th>MIN</th><th>GOL</th>
+            <th>T M/A</th><th>TL M/A</th><th>P M/A</th>
+            <th>%T</th><th>%TL</th><th>%P</th>
+            <th>AST</th><th>FC</th><th>FR</th>
+            <th>T.AM</th><th>T.RO</th><th>FUERA</th><th>REC</th><th>PERD</th>
+          </tr>
+        </thead>
+        <tbody id="stats-tbody"></tbody>
+      </table>
+    </div>
   </div>
 
 </div><!-- /app -->
