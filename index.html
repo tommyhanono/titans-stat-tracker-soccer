@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Titans">
+  <meta name="theme-color" content="#c0392b">
+  <link rel="apple-touch-icon" href="icon-192.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <title>Football Titans Tracker</title>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header id="header">
+    <div class="hrow">
+      <input id="game-name" type="text" placeholder="Nombre del Partido" autocomplete="off">
+      <div class="clock-box">
+        <span id="half-indicator">1T</span>
+        <span id="clock">0:00</span>
+      </div>
+      <div class="score-box">
+        <span id="team-score">0</span>
+        <span class="score-sep">:</span>
+        <div class="rival-adj">
+          <button id="rival-minus" aria-label="Quitar gol rival">−</button>
+          <span id="rival-score">0</span>
+          <button id="rival-plus" aria-label="Agregar gol rival">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="hrow ctrl-row">
+      <button id="btn-clock" class="hbtn">▶ Iniciar</button>
+      <button id="btn-half"  class="hbtn">⏭ Sig. Tiempo</button>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- Left Panel -->
+    <div id="left-panel">
+      <!-- Active player badge -->
+      <div id="active-badge">
+        <span id="active-name">— Ninguno seleccionado —</span>
+        <span id="active-status"></span>
+      </div>
+
+      <!-- Player list -->
+      <div id="player-list"></div>
+
+      <!-- Action log (landscape only) -->
+      <div id="action-log">
+        <div id="log-entries"></div>
+      </div>
+
+      <!-- Control buttons -->
+      <div id="ctrl-btns">
+        <button id="btn-undo">↩ Deshacer</button>
+        <button id="btn-save">💾 Guardar</button>
+        <button id="btn-load">📂 Cargar</button>
+        <button id="btn-report">📋 Reporte</button>
+        <button id="btn-new">🔄 Nuevo</button>
+        <button id="btn-add">+ Jugador</button>
+        <button id="btn-remove">− Jugador</button>
+        <button id="btn-table">📊 Tabla</button>
+        <button id="btn-excel">📥 Excel</button>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div id="right-panel">
+
+      <!-- Shots section -->
+      <div>
+        <div class="section-title">TIROS</div>
+        <div class="shot-grid">
+          <div class="shot-row">
+            <span class="shot-lbl">Gol (juego)</span>
+            <button class="sbtn made"   data-type="goles">✓</button>
+            <button class="sbtn missed" data-type="goles">✗</button>
+          </div>
+          <div class="shot-row">
+            <span class="shot-lbl">Tiro Libre</span>
+            <button class="sbtn made"   data-type="tirosLibres">✓</button>
+            <button class="sbtn missed" data-type="tirosLibres">✗</button>
+          </div>
+          <div class="shot-row">
+            <span class="shot-lbl">Penal</span>
+            <button class="sbtn made"   data-type="penales">✓</button>
+            <button class="sbtn missed" data-type="penales">✗</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats section -->
+      <div>
+        <div class="section-title">ESTADÍSTICAS</div>
+        <div class="stat-grid">
+          <button class="stbtn" data-stat="asistencias">Asistencia</button>
+          <button class="stbtn" data-stat="faltasCometidas">Falta Cometida</button>
+          <button class="stbtn" data-stat="faltasRecibidas">Falta Recibida</button>
+          <button class="stbtn amarilla" data-stat="tarjetasAmarillas">🟨 Tarjeta Amarilla</button>
+          <button class="stbtn roja"     data-stat="tarjetasRojas">🟥 Tarjeta Roja</button>
+          <button class="stbtn" data-stat="fueraLugar">Fuera de Lugar</button>
+          <button class="stbtn" data-stat="recuperaciones">Recuperación</button>
+          <button class="stbtn" data-stat="perdidas">Pérdida</button>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+  </div><!-- /main -->
+
+  <!-- Stats table panel -->
+  <div id="stats-panel" class="hidden">
+    <table id="stats-tbl">
+      <thead>
+        <tr>
+          <th class="scol">Jugador</th>
+          <th>MIN</th>
+          <th>GOL</th>
+          <th>T M/A</th>
+          <th>TL M/A</th>
+          <th>P M/A</th>
+          <th>%T</th>
+          <th>%TL</th>
+          <th>%P</th>
+          <th>AST</th>
+          <th>FC</th>
+          <th>FR</th>
+          <th>T.AM</th>
+          <th>T.RO</th>
+          <th>FUERA</th>
+          <th>REC</th>
+          <th>PERD</th>
+        </tr>
+      </thead>
+      <tbody id="stats-tbody"></tbody>
+    </table>
+  </div>
+
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
